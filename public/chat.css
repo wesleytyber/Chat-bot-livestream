@@ -1,0 +1,16 @@
+  body {
+    margin: 0;
+    background: transparent;
+    font-family: Arial, sans-serif;
+    color: rgb(245, 9, 9);
+    overflow-y: auto;
+  }
+  .msg {
+    margin: 4px 0;
+    font-size: 20px;
+  }
+  .user {
+    font-weight: bold;
+    color: #9146FF; /* Twitch purple */
+  }
+  

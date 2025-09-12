@@ -1,0 +1,15 @@
+{
+  "streamerColor": "#d30303",
+  "modColor": "#2c962d",
+  "subColor": "#18d60a",
+  "userColor": "#d97708",
+  "fontSize": "20px",
+  "fontWeight": "normal",
+  "background": "#030303",
+  "streamerMsgColor": "#fbf9f9",
+  "modMsgColor": "#ffffff",
+  "subMsgColor": "#ffffff",
+  "userMsgColor": "#eee8e2",
+  "botColor": "#00bfff",
+  "botMsgColor": "#cccccc"
+}

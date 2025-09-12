@@ -1,0 +1,151 @@
+<!-- public/panel.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel de Configuração do Chat</title>
+  <style>
+    body { font-family: Arial; background:#111; color:#fff; padding:20px; }
+    label { display:block; margin:10px 0 5px; }
+    input, select { padding:6px; font-size:14px; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .box { background:#1b1b1b; padding:12px; border-radius:8px; margin-bottom:12px; width:100%; max-width:520px; }
+    button { margin-top:10px; padding:10px 20px; background:#9146FF; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+    .preview { margin-top:20px; }
+    .preview .example { padding:10px; border-radius:6px; margin-bottom:8px; }
+  </style>
+</head>
+<body>
+  <h1>Configurar Chat</h1>
+
+  <div class="box">
+    <label>Cor do Nome (Streamer): <input type="color" name="streamerColor" id="streamerColor"></label>
+    <label>Cor da Mensagem (Streamer): <input type="color" name="streamerMsgColor" id="streamerMsgColor"></label>
+
+    <label>Cor do Mod (nome): <input type="color" name="modColor" id="modColor"></label>
+    <label>Cor da Mensagem (Mod): <input type="color" name="modMsgColor" id="modMsgColor"></label>
+
+    <label>Cor do Sub (nome): <input type="color" name="subColor" id="subColor"></label>
+    <label>Cor da Mensagem (Sub): <input type="color" name="subMsgColor" id="subMsgColor"></label>
+
+    <label>Cor do Usuário (nome): <input type="color" name="userColor" id="userColor"></label>
+    <label>Cor da Mensagem (Usuário): <input type="color" name="userMsgColor" id="userMsgColor"></label>
+
+    <label>Tamanho da Fonte (px): <input type="number" id="fontSize" min="12" max="48"></label>
+    <label>Peso da Fonte:
+      <select id="fontWeight">
+        <option value="normal">Regular</option>
+        <option value="bold">Negrito</option>
+      </select>
+    </label>
+
+    <label>Background: <input type="color" id="backgroundColor"></label>
+    <label><input type="checkbox" id="transparentBg"> Fundo transparente</label>
+
+    <div style="margin-top:10px;">
+      <button id="saveBtn">Salvar Configuração</button>
+    </div>
+  </div>
+
+  <div class="preview">
+    <h3>Preview</h3>
+    <div id="previewUser" class="example"> <span class="name">userName:</span> <span class="msg">Mensagem exemplo</span></div>
+    <div id="previewMod" class="example"> <span class="name">modName:</span> <span class="msg">Mensagem exemplo</span></div>
+    <div id="previewSub" class="example"> <span class="name">subName:</span> <span class="msg">Mensagem exemplo</span></div>
+    <div id="previewStreamer" class="example"> <span class="name">streamerName:</span> <span class="msg">Mensagem exemplo</span></div>
+  </div>
+
+  <script>
+    async function loadConfig() {
+      const res = await fetch('/config');
+      const cfg = await res.json();
+
+      document.getElementById("streamerColor").value = cfg.streamerColor || "#9146FF";
+      document.getElementById("streamerMsgColor").value = cfg.streamerMsgColor || "#CCCCCC";
+      document.getElementById("modColor").value = cfg.modColor || "#00FF00";
+      document.getElementById("modMsgColor").value = cfg.modMsgColor || "#CCCCCC";
+      document.getElementById("subColor").value = cfg.subColor || "#FFA500";
+      document.getElementById("subMsgColor").value = cfg.subMsgColor || "#CCCCCC";
+      document.getElementById("userColor").value = cfg.userColor || "#FFFFFF";
+      document.getElementById("userMsgColor").value = cfg.userMsgColor || "#CCCCCC";
+      document.getElementById("fontSize").value = parseInt((cfg.fontSize || "18px").replace("px",""));
+      document.getElementById("fontWeight").value = cfg.fontWeight || "normal";
+      document.getElementById("backgroundColor").value = cfg.background && cfg.background !== "transparent" ? cfg.background : "#000000";
+      document.getElementById("transparentBg").checked = (cfg.background === "transparent");
+      applyPreview(cfg);
+    }
+
+    function applyPreview(cfg) {
+      const set = (el, nameCol, msgCol, bg, size, weight) => {
+        el.querySelector('.name').style.color = nameCol;
+        el.querySelector('.msg').style.color = msgCol;
+        el.style.background = bg;
+        el.style.fontSize = size;
+        el.style.fontWeight = weight;
+      };
+
+      const bg = document.getElementById("transparentBg").checked ? "transparent" : document.getElementById("backgroundColor").value;
+      const size = (document.getElementById("fontSize").value || 18) + "px";
+      const weight = document.getElementById("fontWeight").value || "normal";
+
+      set(document.getElementById("previewUser"), document.getElementById("userColor").value, document.getElementById("userMsgColor").value, bg, size, weight);
+      set(document.getElementById("previewMod"), document.getElementById("modColor").value, document.getElementById("modMsgColor").value, bg, size, weight);
+      set(document.getElementById("previewSub"), document.getElementById("subColor").value, document.getElementById("subMsgColor").value, bg, size, weight);
+      set(document.getElementById("previewStreamer"), document.getElementById("streamerColor").value, document.getElementById("streamerMsgColor").value, bg, size, weight);
+    }
+
+    document.getElementById("saveBtn").addEventListener("click", async () => {
+      const cfg = {
+        streamerColor: document.getElementById("streamerColor").value,
+        streamerMsgColor: document.getElementById("streamerMsgColor").value,
+        modColor: document.getElementById("modColor").value,
+        modMsgColor: document.getElementById("modMsgColor").value,
+        subColor: document.getElementById("subColor").value,
+        subMsgColor: document.getElementById("subMsgColor").value,
+        userColor: document.getElementById("userColor").value,
+        userMsgColor: document.getElementById("userMsgColor").value,
+        fontSize: (document.getElementById("fontSize").value || 18) + "px",
+        fontWeight: document.getElementById("fontWeight").value,
+        background: document.getElementById("transparentBg").checked ? "transparent" : document.getElementById("backgroundColor").value
+      };
+
+      // aplica preview local
+      applyPreview(cfg);
+
+      // envia pro server
+      const res = await fetch('/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cfg)
+      });
+
+      if (res.ok) {
+        alert("Config salva e aplicada no chat.");
+      } else {
+        alert("Erro ao salvar config.");
+      }
+    });
+
+    // atualiza o preview quando mudar algum input
+    document.querySelectorAll('input, select').forEach(i => i.addEventListener('input', () => {
+      const tmp = {
+        streamerColor: document.getElementById("streamerColor").value,
+        streamerMsgColor: document.getElementById("streamerMsgColor").value,
+        modColor: document.getElementById("modColor").value,
+        modMsgColor: document.getElementById("modMsgColor").value,
+        subColor: document.getElementById("subColor").value,
+        subMsgColor: document.getElementById("subMsgColor").value,
+        userColor: document.getElementById("userColor").value,
+        userMsgColor: document.getElementById("userMsgColor").value,
+        fontSize: (document.getElementById("fontSize").value || 18) + "px",
+        fontWeight: document.getElementById("fontWeight").value,
+        background: document.getElementById("transparentBg").checked ? "transparent" : document.getElementById("backgroundColor").value
+      };
+      applyPreview(tmp);
+    }));
+
+    // load on open
+    loadConfig();
+  </script>
+</body>
+</html>
