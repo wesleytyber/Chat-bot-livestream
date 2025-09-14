@@ -1,14 +1,22 @@
-export default async function handler(req, res) {
-  try {
-    const { code } = req.query;
-    if (!code) return res.status(400).send("Faltando code");
+import fs from "fs/promises";
+import path from "path";
 
-    const clientId = process.env.CLIENT_ID;
-    const clientSecret = process.env.CLIENT_SECRET;
+export default async function handler(req, res) {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Método não permitido" });
+  }
+
+  try {
+    const code = req.query.code;
+    if (!code) {
+      return res.status(400).json({ error: "Code ausente" });
+    }
+
+    const clientId = process.env.TWITCH_CLIENT_ID;
+    const clientSecret = process.env.TWITCH_CLIENT_SECRET;
     const redirectUri = process.env.REDIRECT_URI;
-    
-    // Troca code por token
-    const tokenResponse = await fetch("https://id.twitch.tv/oauth2/token", {
+
+    const response = await fetch(`https://id.twitch.tv/oauth2/token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
@@ -16,40 +24,23 @@ export default async function handler(req, res) {
         client_secret: clientSecret,
         code,
         grant_type: "authorization_code",
-        redirect_uri: redirectUri
-      })
+        redirect_uri: redirectUri,
+      }),
     });
 
-    const tokenData = await tokenResponse.json();
-    if (tokenData.error) return res.status(400).send(tokenData.error);
+    const data = await response.json();
 
-    // Pega info do usuário autenticado
-    const userResponse = await fetch("https://api.twitch.tv/helix/users", {
-      headers: {
-        "Authorization": `Bearer ${tokenData.access_token}`,
-        "Client-Id": clientId
-      }
-    });
-    const userData = await userResponse.json();
+    if (!data.access_token) {
+      return res.status(400).json({ error: "Falha ao obter token", details: data });
+    }
 
-    // Salva os dados no backend (memória)
-    const sessionId = Math.random().toString(36).substring(2);
-    global.sessions = global.sessions || {};
-    global.sessions[sessionId] = {
-      BOT_USER_ID: userData.data[0].id,
-      LOGIN: userData.data[0].login,
-      OAUTH_TOKEN: tokenData.access_token,
-      REFRESH_TOKEN: tokenData.refresh_token,
-      CLIENT_ID: clientId
-    };
-    
-    console.log(userData);
-    console.log(tokenData.access_token);
+    // salva config em /tmp (ephemeral, mas funciona na Vercel em runtime)
+    const configPath = path.join("/tmp", "config.json");
+    await fs.writeFile(configPath, JSON.stringify(data, null, 2));
 
-    // Redireciona para a tela do painel com sessionId
-    return res.redirect(`/panel.html?session=${sessionId}`);
+    return res.redirect("/chat.html");
   } catch (err) {
     console.error(err);
-    return res.status(500).send("Erro interno no servidor");
+    return res.status(500).json({ error: "Erro interno no servidor" });
   }
 }
