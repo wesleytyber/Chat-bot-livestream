@@ -56,8 +56,13 @@
   </div>
 
   <script>
+    // pega sessionId da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get("session");
+    if (!sessionId) alert("SessionId não encontrado! Refaca login na Twitch.");
+
     async function loadConfig() {
-      const res = await fetch('/config');
+      const res = await fetch('/api/config');
       const cfg = await res.json();
 
       document.getElementById("streamerColor").value = cfg.streamerColor || "#9146FF";
@@ -95,32 +100,32 @@
     }
 
     document.getElementById("saveBtn").addEventListener("click", async () => {
-      const cfg = {
-        streamerColor: document.getElementById("streamerColor").value,
-        streamerMsgColor: document.getElementById("streamerMsgColor").value,
-        modColor: document.getElementById("modColor").value,
-        modMsgColor: document.getElementById("modMsgColor").value,
-        subColor: document.getElementById("subColor").value,
-        subMsgColor: document.getElementById("subMsgColor").value,
-        userColor: document.getElementById("userColor").value,
-        userMsgColor: document.getElementById("userMsgColor").value,
-        fontSize: (document.getElementById("fontSize").value || 18) + "px",
-        fontWeight: document.getElementById("fontWeight").value,
-        background: document.getElementById("transparentBg").checked ? "transparent" : document.getElementById("backgroundColor").value
-      };
+      
+  const cfg = {
+    streamerColor: document.getElementById("streamerColor").value,
+    streamerMsgColor: document.getElementById("streamerMsgColor").value,
+    modColor: document.getElementById("modColor").value,
+    modMsgColor: document.getElementById("modMsgColor").value,
+    subColor: document.getElementById("subColor").value,
+    subMsgColor: document.getElementById("subMsgColor").value,
+    userColor: document.getElementById("userColor").value,
+    userMsgColor: document.getElementById("userMsgColor").value,
+    fontSize: (document.getElementById("fontSize").value || 18) + "px",
+    fontWeight: document.getElementById("fontWeight").value,
+    background: document.getElementById("transparentBg").checked ? "transparent" : document.getElementById("backgroundColor").value
+  };
 
-      // aplica preview local
-      applyPreview(cfg);
+  applyPreview(cfg);
 
-      // envia pro server
-      const res = await fetch('/config', {
+      const res = await fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cfg)
       });
 
       if (res.ok) {
-        alert("Config salva e aplicada no chat.");
+        const urlFinal = `${window.location.origin}/chat.html?session=${sessionId}`;
+        prompt("Copie esta URL para o OBS:", urlFinal);
       } else {
         alert("Erro ao salvar config.");
       }

@@ -1,179 +1,3 @@
-// import WebSocket from 'ws';
-// import dotenv from "dotenv";
-// import express from "express";   // ou require('express') se usar CommonJS
-// import { WebSocketServer } from "ws";
-// import path from "path";
-
-// const BOT_USER_ID = process.env.BOT_USER_ID;
-// const OAUTH_TOKEN = process.env.OAUTH_TOKEN;
-// const CLIENT_ID = process.env.CLIENT_ID;
-// const CHAT_CHANNEL_USER_ID = process.env.CHAT_CHANNEL_USER_ID;
-
-// const EVENTSUB_WEBSOCKET_URL = process.env.EVENTSUB_WEBSOCKET_URL;
-
-// var websocketSessionID;
-
-// dotenv.config();
-// const app = express();
-// const PORT = 3000;
-
-// // Serve arquivos estáticos (HTML)
-// app.use(express.static(path.join(process.cwd())));
-
-// app.listen(PORT, () => {
-//   console.log(`HTTP server running at http://localhost:${PORT}`);
-// });
-
-// // WebSocket server
-// const wss = new WebSocketServer({ port: 3001 });
-// function broadcast(msg) {
-//   wss.clients.forEach(client => {
-//     if (client.readyState === 1) client.send(JSON.stringify(msg));
-//   });
-// }
-
-// // Start executing the bot from here
-// (async () => {
-// 	// Verify that the authentication is valid
-// 	await getAuth();
-
-// 	// Start WebSocket client and register handlers
-// 	const websocketClient = startWebSocketClient();
-// })();
-
-// // WebSocket will persist the application loop until you exit the program forcefully
-
-// async function getAuth() {
-// 	// https://dev.twitch.tv/docs/authentication/validate-tokens/#how-to-validate-a-token
-// 	let response = await fetch('https://id.twitch.tv/oauth2/validate', {
-// 		method: 'GET',
-// 		headers: {
-// 			'Authorization': 'OAuth ' + OAUTH_TOKEN
-// 		}
-// 	});
-
-// 	if (response.status != 200) {
-// 		let data = await response.json();
-// 		console.error("Token is not valid. /oauth2/validate returned status code " + response.status);
-// 		console.error(data);
-// 		process.exit(1);
-// 	}
-
-// 	console.log("Validated token.");
-// }
-
-// function startWebSocketClient() {
-// 	let websocketClient = new WebSocket(EVENTSUB_WEBSOCKET_URL);
-
-// 	websocketClient.on('error', console.error);
-
-// 	websocketClient.on('open', () => {
-// 		console.log('WebSocket connection opened to ' + EVENTSUB_WEBSOCKET_URL);
-// 	});
-
-// 	websocketClient.on('message', (data) => {
-// 		handleWebSocketMessage(JSON.parse(data.toString()));
-// 	});
-
-// 	return websocketClient;
-// }
-
-// function handleWebSocketMessage(data) {
-// 	switch (data.metadata.message_type) {
-// 		case 'session_welcome': // First message you get from the WebSocket server when connecting
-// 			websocketSessionID = data.payload.session.id; // Register the Session ID it gives us
-
-// 			// Listen to EventSub, which joins the chatroom from your bot's account
-// 			registerEventSubListeners();
-// 			break;
-// 		case 'notification': // An EventSub notification has occurred, such as channel.chat.message
-// 			switch (data.metadata.subscription_type) {
-// 				case 'channel.chat.message':
-// 					// First, print the message to the program's console.
-// 					console.log(`MSG #${data.payload.event.broadcaster_user_login} <${data.payload.event.chatter_user_login}> ${data.payload.event.message.text}`);
-
-// 					// Then check to see if that message was "HeyGuys"
-// 					if (data.payload.event.message.text.trim() == "HeyGuys") {
-// 						// If so, send back "VoHiYo" to the chatroom
-// 						sendChatMessage("VoHiYo")
-// 					}
-
-// 					break;
-// 			}
-// 			break;
-// 	}
-	
-// // Dentro de handleWebSocketMessage -> channel.chat.message
-// if (data.metadata.subscription_type === 'channel.chat.message') {
-//   const chatMsg = {
-//     user: data.payload.event.chatter_user_login,
-//     message: data.payload.event.message.text
-//   };
-//   console.log(`${chatMsg.user}: ${chatMsg.message}`);
-//   broadcast(chatMsg); // envia pro HTML
-// }
-
-// }
-
-// async function sendChatMessage(chatMessage) {
-// 	let response = await fetch('https://api.twitch.tv/helix/chat/messages', {
-// 		method: 'POST',
-// 		headers: {
-// 			'Authorization': 'Bearer ' + OAUTH_TOKEN,
-// 			'Client-Id': CLIENT_ID,
-// 			'Content-Type': 'application/json'
-// 		},
-// 		body: JSON.stringify({
-// 			broadcaster_id: CHAT_CHANNEL_USER_ID,
-// 			sender_id: BOT_USER_ID,
-// 			message: chatMessage
-// 		})
-// 	});
-
-// 	if (response.status != 200) {
-// 		let data = await response.json();
-// 		console.error("Failed to send chat message");
-// 		console.error(data);
-// 	} else {
-// 		console.log("Sent chat message: " + chatMessage);
-// 	}
-// }
-
-// async function registerEventSubListeners() {
-// 	// Register channel.chat.message
-// 	let response = await fetch('https://api.twitch.tv/helix/eventsub/subscriptions', {
-// 		method: 'POST',
-// 		headers: {
-// 			'Authorization': 'Bearer ' + OAUTH_TOKEN,
-// 			'Client-Id': CLIENT_ID,
-// 			'Content-Type': 'application/json'
-// 		},
-// 		body: JSON.stringify({
-// 			type: 'channel.chat.message',
-// 			version: '1',
-// 			condition: {
-// 				broadcaster_user_id: CHAT_CHANNEL_USER_ID,
-// 				user_id: BOT_USER_ID
-// 			},
-// 			transport: {
-// 				method: 'websocket',
-// 				session_id: websocketSessionID
-// 			}
-// 		})
-// 	});
-
-// 	if (response.status != 202) {
-// 		let data = await response.json();
-// 		console.error("Failed to subscribe to channel.chat.message. API call returned status code " + response.status);
-// 		console.error(data);
-// 		process.exit(1);
-// 	} else {
-// 		const data = await response.json();
-// 		console.log(`Subscribed to channel.chat.message [${data.data[0].id}]`);
-// 	}
-// }
-
-
 import WebSocket from 'ws';
 import dotenv from 'dotenv';
 import express from 'express';
@@ -186,15 +10,23 @@ dotenv.config();
 
 const BOT_USER_ID = process.env.BOT_USER_ID;
 const OAUTH_TOKEN = process.env.OAUTH_TOKEN;
-const CLIENT_ID = process.env.CLIENT_ID;
 const CHAT_CHANNEL_USER_ID = process.env.CHAT_CHANNEL_USER_ID;
 const EVENTSUB_WEBSOCKET_URL = process.env.EVENTSUB_WEBSOCKET_URL;
 
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const REDIRECT_URI = process.env.REDIRECT_URI;
+    
 const app = express();
 const PORT = 3000;
 let websocketSessionID;
 
+let oauthToken = null; // variável global
+
 app.use(bodyParser.json());
+
+// Sessões em memória (para múltiplos usuários)
+global.sessions = {}; 
 
 // Config padrão ou carregada de arquivo
 let config = {
@@ -260,19 +92,102 @@ function broadcast(msg) {
   startWebSocketClient();
 })();
 
+// server-side
+app.get('/api/config', (req, res) => {
+  res.json(global.chatConfig || {});
+});
+
+app.post('/api/config', (req, res) => {
+  try {
+    const cfg = req.body;
+    global.chatConfig = cfg; // salva em memória
+    console.log("Config salva:", cfg);
+    // se quiser notificar WebSocket
+    broadcast({ type: "config", config: cfg });
+    res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao salvar config" });
+  }
+});
+
+app.get("/api/auth/callback", async (req, res) => {
+  try {
+    const code = req.query.code;
+    if (!code) return res.status(400).send("Faltando code");
+
+    const tokenRes = await fetch("https://id.twitch.tv/oauth2/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        code,
+        grant_type: "authorization_code",
+        redirect_uri: REDIRECT_URI
+      })
+    });
+
+    const tokenData = await tokenRes.json();
+  if (tokenData.error) return res.status(400).send(tokenData.error);
+
+    // Pega info do usuário autenticado
+    const userResponse = await fetch("https://api.twitch.tv/helix/users", {
+      headers: {
+        "Authorization": `Bearer ${tokenData.access_token}`,
+        "Client-Id": CLIENT_ID
+      }
+    });
+    const userData = await userResponse.json();
+
+    // Salva os dados no backend (memória)
+    const sessionId = Math.random().toString(36).substring(2);
+    global.sessions = global.sessions || {};
+    global.sessions[sessionId] = {
+      BOT_USER_ID: userData.data[0].id,
+      LOGIN: userData.data[0].login,
+      OAUTH_TOKEN: tokenData.access_token,
+      REFRESH_TOKEN: tokenData.refresh_token,
+      CLIENT_ID: CLIENT_ID
+    };
+    
+    // Agora sim, salva o token
+    oauthToken = tokenData.access_token;
+
+    // Valida token
+    await getAuth();
+
+    // Conecta WebSocket
+    startWebSocketClient();
+    return res.redirect(`/panel.html?session=${sessionId}`);
+
+    res.json(tokenData);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erro interno no servidor");
+  }
+});
+
+// Função que valida o token
 async function getAuth() {
+  if (!oauthToken) return; // evita chamar sem token
+
   const res = await fetch("https://id.twitch.tv/oauth2/validate", {
-    headers: { "Authorization": "OAuth " + OAUTH_TOKEN }
+    headers: { "Authorization": "OAuth " + oauthToken }
   });
   if (res.status !== 200) {
     console.error("Token inválido");
-    process.exit(1);
+    return;
   }
   console.log("Token validado");
 }
 
 function startWebSocketClient() {
-  const wsClient = new WebSocket(EVENTSUB_WEBSOCKET_URL);
+  if (!oauthToken) return;
+
+  const wsClient = new WebSocket(EVENTSUB_WEBSOCKET_URL, {
+    headers: { Authorization: "Bearer " + oauthToken }
+  });
 
   wsClient.on("open", () => console.log("Conectado ao EventSub Twitch"));
   wsClient.on("message", data => handleMessage(JSON.parse(data.toString())));
@@ -285,7 +200,7 @@ async function registerEventSubListeners() {
   const res = await fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
     method: "POST",
     headers: {
-      "Authorization": "Bearer " + OAUTH_TOKEN,
+      "Authorization": "Bearer " + oauthToken,
       "Client-Id": CLIENT_ID,
       "Content-Type": "application/json"
     },

@@ -53,9 +53,9 @@
   <footer>Powered by Kalzan</footer>
 
   <script>
-    const clientId = "g05u25q617h3fjym26e9icsc6j6glu"; // do painel da Twitch
+    const clientId = "g05u25q617h3fjym26e9icsc6j6glu";
     const redirectUri = "https://chatlive-ten.vercel.app/api/auth/callback";
-    const scope = "chat:read chat:edit channel:read:subscriptions";
+    const scope = "chat:read chat:edit channel:read:subscriptions user:read:chat";
 
     document.getElementById("login").href =
       `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${encodeURIComponent(scope)}`;
