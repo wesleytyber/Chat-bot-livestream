@@ -56,6 +56,11 @@
       (location.protocol === "https:" ? "wss://" : "ws://") + location.host
     );
 
+    ws.onmessage = (ev) => {
+      const data = JSON.parse(ev.data);
+      console.log("Mensagem WS:", data);
+    };
+
     // badges locais
     const BADGE_ICONS = {
       broadcaster: "/badges/broadcaster.png",

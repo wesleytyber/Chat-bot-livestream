@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import bodyParser from "body-parser";
 import { WebSocketServer } from 'ws';
+import http from "http";
 
 dotenv.config();
 const EVENTSUB_WEBSOCKET_URL = process.env.EVENTSUB_WEBSOCKET_URL;
@@ -69,16 +70,30 @@ app.use(express.json());
 // Servir HTML estático
 app.use(express.static(path.join(process.cwd(), 'public')));
 
-// Inicia servidor (Render ou Local)
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
-  if (process.env.RENDER) {
-    console.log(`🌍 Hospedado em: https://${process.env.RENDER_EXTERNAL_HOSTNAME}`);
-  }
-});
+//// Inicia servidor (Render ou Local)
+// app.listen(PORT, () => {
+//   console.log(`🚀 Server running at http://localhost:${PORT}`);
+//   if (process.env.RENDER) {
+//     console.log(`🌍 Hospedado em: https://${process.env.RENDER_EXTERNAL_HOSTNAME}`);
+//   }
+// });
 
-// WebSocket server
-const wss = new WebSocketServer({ port: 3001 });
+// servidor HTTP único
+const server = http.createServer(app);
+
+server.listen(PORT, () => console.log(`Servidor rodando em http://localhost:${PORT}`));
+
+// servidor WS ligado no mesmo server HTTP
+const wss = new WebSocketServer({ server });
+
+// WS eventos
+wss.on("connection", (ws) => {
+  console.log("Novo cliente conectado via WS");
+
+  ws.send(JSON.stringify({ type: "info", message: "Conectado ao chat!" }));
+
+  ws.on("close", () => console.log("Cliente desconectado"));
+});
 
 function broadcast(msg) {
   wss.clients.forEach(client => {
