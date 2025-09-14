@@ -2,13 +2,14 @@
   "name": "chat-bot",
   "version": "1.0.0",
   "description": "",
-  "main": "alerts.js",
+  "main": "chat.js",
   "type": "module",
-   "scripts": {
+  "scripts": {
     "start": "node chat.js",
     "dev": "nodemon chat.js"
   },
   "dependencies": {
+    "dotenv": "^17.2.2",
     "express": "^4.18.2",
     "node-fetch": "^3.3.2",
     "ws": "^8.13.0"
