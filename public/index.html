@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <title>Login com Twitch</title>
@@ -11,7 +12,8 @@
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      background: #0e0e10; /* cor padrão da Twitch */
+      background: #0e0e10;
+      /* cor padrão da Twitch */
       font-family: Arial, sans-serif;
       color: #fff;
     }
@@ -24,7 +26,8 @@
     #login {
       display: inline-block;
       padding: 14px 28px;
-      background: #9146FF; /* roxo Twitch */
+      background: #9146FF;
+      /* roxo Twitch */
       color: #fff;
       text-decoration: none;
       border-radius: 8px;
@@ -46,6 +49,7 @@
     }
   </style>
 </head>
+
 <body>
   <h1>Chat Livestream - Autenticação</h1>
   <a id="login" href="#">Login com Twitch</a>
@@ -61,4 +65,5 @@
       `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${encodeURIComponent(scope)}`;
   </script>
 </body>
+
 </html>

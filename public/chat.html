@@ -1,15 +1,42 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8" />
   <title>Chat Overlay</title>
   <style>
-    :root { --bg: transparent; --size: 18px; --weight: normal; }
-    body { margin:0; background: var(--bg); font-family: Arial, Helvetica, sans-serif; }
-    #chat { padding:10px; font-size:var(--size); font-weight:var(--weight); }
-    .msg { margin-bottom:6px; line-height:1.2; }
-    .user { font-weight:bold; margin-right:6px; }
-    .msg-text { display:inline; }
+    :root {
+      --bg: transparent;
+      --size: 18px;
+      --weight: normal;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    #chat {
+      padding: 10px;
+      font-size: var(--size);
+      font-weight: var(--weight);
+    }
+
+    .msg {
+      margin-bottom: 6px;
+      line-height: 1.2;
+    }
+
+    .user {
+      font-weight: bold;
+      margin-right: 6px;
+    }
+
+    .msg-text {
+      display: inline;
+    }
+
     .badge {
       width: 24px;
       height: 24px;
@@ -19,12 +46,15 @@
     }
   </style>
 </head>
+
 <body>
   <div id="chat"></div>
 
   <script>
     const chatDiv = document.getElementById("chat");
-    const ws = new WebSocket("ws://localhost:3001");
+    const ws = new WebSocket(
+      (location.protocol === "https:" ? "wss://" : "ws://") + location.host
+    );
 
     // badges locais
     const BADGE_ICONS = {
@@ -108,4 +138,5 @@
     })();
   </script>
 </body>
+
 </html>

@@ -7,9 +7,6 @@ import bodyParser from "body-parser";
 import { WebSocketServer } from 'ws';
 
 dotenv.config();
-
-const OAUTH_TOKEN = process.env.OAUTH_TOKEN;
-const CHAT_CHANNEL_USER_ID = process.env.CHAT_CHANNEL_USER_ID;
 const EVENTSUB_WEBSOCKET_URL = process.env.EVENTSUB_WEBSOCKET_URL;
 const PORT = process.env.PORT || 3000;
 
@@ -218,7 +215,7 @@ async function registerEventSubListeners() {
       type: "channel.chat.message",
       version: "1",
       condition: {
-        broadcaster_user_id: CHAT_CHANNEL_USER_ID,
+        broadcaster_user_id: BOT_USER_ID,
         user_id: BOT_USER_ID
       },
       transport: { method: "websocket", session_id: websocketSessionID }
@@ -268,7 +265,7 @@ function handleMessage(data) {
   }
 }
 
-if (EVENTSUB_WEBSOCKET_URL && OAUTH_TOKEN) {
+if (EVENTSUB_WEBSOCKET_URL && oauthToken) {
   import('ws').then(({ default: WebSocketClient }) => {
     const wsClient = new WebSocketClient(EVENTSUB_WEBSOCKET_URL);
 
@@ -288,7 +285,7 @@ if (EVENTSUB_WEBSOCKET_URL && OAUTH_TOKEN) {
 function detectRoleFromEvent(event) {
   try {
     // Depois verifica broadcaster
-    if (event.chatter_user_id && CHAT_CHANNEL_USER_ID && event.chatter_user_id === CHAT_CHANNEL_USER_ID) return "streamer";
+    if (event.chatter_user_id && BOT_USER_ID && event.chatter_user_id === BOT_USER_ID) return "streamer";
 
     // Moderador
     if (event.is_mod === true || event.isModerator === true) return "mod";
