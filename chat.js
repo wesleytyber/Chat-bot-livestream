@@ -8,7 +8,6 @@ import { WebSocketServer } from 'ws';
 
 dotenv.config();
 
-const BOT_USER_ID = process.env.BOT_USER_ID;
 const OAUTH_TOKEN = process.env.OAUTH_TOKEN;
 const CHAT_CHANNEL_USER_ID = process.env.CHAT_CHANNEL_USER_ID;
 const EVENTSUB_WEBSOCKET_URL = process.env.EVENTSUB_WEBSOCKET_URL;
@@ -16,17 +15,18 @@ const PORT = process.env.PORT || 3000;
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI || "http://localhost:3000/api/auth/callback";
+const REDIRECT_URI = process.env.REDIRECT_URI || "https://chat-livestream.onrender.com/api/auth/callback";
 const app = express();
 
 let websocketSessionID;
 
+let BOT_USER_ID = null;
 let oauthToken = null; // variável global
 
 app.use(bodyParser.json());
 
 // Sessões em memória (para múltiplos usuários)
-global.sessions = {}; 
+global.sessions = {};
 
 // Config padrão ou carregada de arquivo
 let config = {
@@ -132,7 +132,7 @@ app.get("/api/auth/callback", async (req, res) => {
     });
 
     const tokenData = await tokenRes.json();
-  if (tokenData.error) return res.status(400).send(tokenData.error);
+    if (tokenData.error) return res.status(400).send(tokenData.error);
 
     // Pega info do usuário autenticado
     const userResponse = await fetch("https://api.twitch.tv/helix/users", {
@@ -141,19 +141,26 @@ app.get("/api/auth/callback", async (req, res) => {
         "Client-Id": CLIENT_ID
       }
     });
+
     const userData = await userResponse.json();
+    BOT_USER_ID = userData.data && userData.data.length > 0 ? userData.data[0].id : null;
 
     // Salva os dados no backend (memória)
     const sessionId = Math.random().toString(36).substring(2);
     global.sessions = global.sessions || {};
     global.sessions[sessionId] = {
-      BOT_USER_ID: userData.data[0].id,
-      LOGIN: userData.data[0].login,
+      BOT_USER_ID: userData.data && userData.data.length > 0 ? userData.data[0].id : null,
+      LOGIN: userData.data && userData.data.length > 0 ? userData.data[0].login : null,
       OAUTH_TOKEN: tokenData.access_token,
       REFRESH_TOKEN: tokenData.refresh_token,
       CLIENT_ID: CLIENT_ID
     };
-    
+
+    if (!userData.data || userData.data.length === 0) {
+      console.error("Erro: Twitch não retornou dados do usuário", userData);
+      return res.status(400).send("Falha ao obter dados do usuário");
+    }
+
     // Agora sim, salva o token
     oauthToken = tokenData.access_token;
 
@@ -281,21 +288,21 @@ if (EVENTSUB_WEBSOCKET_URL && OAUTH_TOKEN) {
 function detectRoleFromEvent(event) {
   try {
     // Depois verifica broadcaster
-    if(event.chatter_user_id && CHAT_CHANNEL_USER_ID && event.chatter_user_id === CHAT_CHANNEL_USER_ID) return "streamer";
+    if (event.chatter_user_id && CHAT_CHANNEL_USER_ID && event.chatter_user_id === CHAT_CHANNEL_USER_ID) return "streamer";
 
     // Moderador
-    if(event.is_mod === true || event.isModerator === true) return "mod";
+    if (event.is_mod === true || event.isModerator === true) return "mod";
 
     // Subscriber
-    if(event.is_subscriber === true || event.isSubscriber === true) return "sub";
+    if (event.is_subscriber === true || event.isSubscriber === true) return "sub";
 
     // Badges adicionais
-    if(Array.isArray(event.badges)) {
-      if(event.badges.some(b => (b.type === "broadcaster" || b.set_id === "broadcaster"))) return "streamer";
-      if(event.badges.some(b => (b.type === "moderator" || b.set_id === "moderator"))) return "mod";
-      if(event.badges.some(b => (b.type === "subscriber" || b.set_id === "subscriber"))) return "sub";
+    if (Array.isArray(event.badges)) {
+      if (event.badges.some(b => (b.type === "broadcaster" || b.set_id === "broadcaster"))) return "streamer";
+      if (event.badges.some(b => (b.type === "moderator" || b.set_id === "moderator"))) return "mod";
+      if (event.badges.some(b => (b.type === "subscriber" || b.set_id === "subscriber"))) return "sub";
     }
-  } catch(e) {}
+  } catch (e) { }
 
   return "user";
 }
