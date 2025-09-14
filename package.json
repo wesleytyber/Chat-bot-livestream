@@ -1,7 +1,7 @@
 {
   "name": "chat-bot",
   "version": "1.0.0",
-  "description": "",
+  "description": "Chat integrado para live com painel de configuração",
   "main": "chat.js",
   "type": "module",
   "scripts": {
@@ -9,7 +9,6 @@
     "dev": "nodemon chat.js"
   },
   "dependencies": {
-    "dotenv": "^17.2.2",
     "express": "^4.18.2",
     "node-fetch": "^3.3.2",
     "ws": "^8.13.0"

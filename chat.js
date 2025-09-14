@@ -12,13 +12,13 @@ const BOT_USER_ID = process.env.BOT_USER_ID;
 const OAUTH_TOKEN = process.env.OAUTH_TOKEN;
 const CHAT_CHANNEL_USER_ID = process.env.CHAT_CHANNEL_USER_ID;
 const EVENTSUB_WEBSOCKET_URL = process.env.EVENTSUB_WEBSOCKET_URL;
+const PORT = process.env.PORT || 3000;
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI;
-    
+const REDIRECT_URI = process.env.REDIRECT_URI || "http://localhost:3000/api/auth/callback";
 const app = express();
-const PORT = 3000;
+
 let websocketSessionID;
 
 let oauthToken = null; // variável global
@@ -72,9 +72,12 @@ app.use(express.json());
 // Servir HTML estático
 app.use(express.static(path.join(process.cwd(), 'public')));
 
-
+// Inicia servidor (Render ou Local)
 app.listen(PORT, () => {
-  console.log(`HTTP server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  if (process.env.RENDER) {
+    console.log(`🌍 Hospedado em: https://${process.env.RENDER_EXTERNAL_HOSTNAME}`);
+  }
 });
 
 // WebSocket server
